@@ -134,9 +134,9 @@
     <div class="device-card">
         <div class="section-title"><i class="fas fa-microphone"></i> 唤醒词设置</div>
         <div id="wakeupContainer">
-            <!-- 动态生成 -->
+            <!-- 动态生成四个唤醒词输入框+修改按钮 -->
         </div>
-        <div style="font-size:0.6rem; color:#64748b; margin-top:6px;">点击“修改”可编辑唤醒词并自动下发对应字母指令</div>
+        <div style="font-size:0.6rem; color:#64748b; margin-top:6px;">点击“修改”可编辑唤醒词并自动保存</div>
     </div>
 
     <div class="log-box" id="logBox">🏠 语音家居控制面板就绪</div>
@@ -170,13 +170,13 @@
         const brightDownBtn = document.getElementById('brightDownBtn');
         const wakeupContainer = document.getElementById('wakeupContainer');
 
-        // 蓝牙变量
+        // 蓝牙变量（完全按照成功案例）
         let bluetoothDevice = null, gattServer = null, notifyChar = null, writeChar = null, isConnected = false;
+        // 设备状态
         let currentBrightness = 0, currentFan = 0, currentAc = 0;
 
-        // 唤醒词配置
+        // 默认唤醒词配置
         const defaultWakeupWords = ['小爱同学', '小布', '小艺', '你好'];
-        const wakeupChars = ['A', 'B', 'C', 'D']; // 对应下发的字母
 
         function loadWakeupWords() {
             const saved = localStorage.getItem('wakeup_words');
@@ -194,13 +194,12 @@
         function renderWakeupUI() {
             wakeupContainer.innerHTML = wakeupWords.map((word, idx) => `
                 <div class="wakeup-item">
-                    <span style="font-size:0.7rem; width:20px;">${wakeupChars[idx]}</span>
+                    <span style="font-size:0.7rem; width:20px;">${idx+1}</span>
                     <input type="text" class="wakeup-input" data-idx="${idx}" value="${word}" placeholder="唤醒词" readonly>
                     <button class="btn btn-accent wakeup-edit" data-idx="${idx}">修改</button>
                 </div>
             `).join('');
 
-            // 修改按钮事件：弹出 prompt 修改唤醒词，保存后下发对应字母
             document.querySelectorAll('.wakeup-edit').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const idx = parseInt(e.target.dataset.idx);
@@ -210,13 +209,10 @@
                         saveWakeupWords(wakeupWords);
                         renderWakeupUI();
                         addLog(`✏️ 唤醒词${idx+1}已更新为“${wakeupWords[idx]}”`, 'system');
-                        // 下发对应的字母指令
-                        sendCommand(wakeupChars[idx], `唤醒词${idx+1}修改`);
                     }
                 });
             });
 
-            // 双击编辑功能（可选，保留但不自动下发）
             document.querySelectorAll('.wakeup-input').forEach(inp => {
                 inp.addEventListener('dblclick', () => {
                     inp.removeAttribute('readonly');
@@ -242,15 +238,15 @@
             acStatus.textContent = currentAc ? '开' : '关';
         }
 
-        // 蓝牙指令发送
+        // 蓝牙指令发送（与成功案例一致）
         async function sendCommand(cmd, desc) {
             if (!isConnected || !writeChar) {
-                addLog('⚠️ 未连接，无法发送指令 ' + cmd, 'tx');
+                addLog('⚠️ 未连接，无法发送', 'tx');
                 return;
             }
             try {
                 await writeChar.writeValue(new TextEncoder().encode(cmd));
-                addLog(`📤 下发 ${cmd} (${desc})`, 'tx');
+                addLog(`📤 ${cmd} (${desc})`, 'tx');
             } catch(e) {
                 addLog(`发送失败: ${e.message}`, 'tx');
             }
@@ -273,7 +269,7 @@
             parseUploadData(new TextDecoder('utf-8').decode(val).trim());
         }
 
-        // 蓝牙扫描与连接（参照成功案例）
+        // 蓝牙扫描与连接（完全按照成功案例写法）
         async function scan() {
             if (!navigator.bluetooth) { alert('需要Web Bluetooth'); return; }
             const svc = serviceUuidInput.value.trim(); if(!svc) return alert('输入服务UUID');
