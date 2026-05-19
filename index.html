@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0">
+    <title>语音家居控制面板</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --accent: #3b82c4;
+            --accent2: #10b981;
+            --danger: #ef4444;
+            --warn: #f59e0b;
+            --text: #1e293b;
+            --text2: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(160deg, #e8f0f8 0%, #f0f4f8 30%, #fdfcfb 60%, #eef2f6 100%);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center; padding: 14px;
+        }
+        .phone {
+            max-width: 430px; width: 100%; background: #fafbfc; border-radius: 40px;
+            padding: 16px 14px 22px; box-shadow: 0 18px 45px rgba(0,0,0,0.12);
+            border: 1px solid #dce3ea; color: var(--text);
+            display: flex; flex-direction: column; gap: 12px; max-height: 95vh; overflow-y: auto;
+        }
+        .status-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; border-radius: 28px; padding: 8px 16px; font-size:0.8rem; font-weight:600;
+            box-shadow: var(--shadow); border:1px solid #e8ecf1;
+        }
+        .bt-area { display:flex; align-items:center; gap:7px; }
+        .led { width:10px; height:10px; border-radius:50%; background:#cbd5e0; transition:0.3s; }
+        .led.active { background:#10b981; box-shadow:0 0 10px #10b981; animation:pulse 1.4s infinite; }
+        @keyframes pulse { 0%,100%{opacity:0.6;transform:scale(1);} 50%{opacity:1;transform:scale(1.15);} }
+        .clock { font-family:monospace; font-weight:700; font-size:0.9rem; color:#334155; }
+        .btn {
+            background:#f1f5f9; border:none; padding:7px 14px; border-radius:18px; font-weight:600; font-size:0.68rem;
+            color:#334155; cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+            border:1px solid #dde4ed; transition:0.15s; white-space:nowrap;
+        }
+        .btn:active { transform:scale(0.95); background:#e2e8f0; }
+        .btn:disabled { opacity:0.5; pointer-events:none; }
+        .btn-accent { background:#3b82c4; color:#fff; border-color:#3b82c4; }
+        .btn-danger { background:#ef4444; color:#fff; border-color:#ef4444; }
+        .btn-warn { background:#f59e0b; color:#fff; border-color:#f59e0b; }
+        .btn-success { background:#10b981; color:#fff; border-color:#10b981; }
+        .config-panel {
+            display:none; background:#fff; border-radius:18px; padding:10px; flex-direction:column; gap:7px;
+            border:1px solid #e2e8f0; box-shadow:var(--shadow);
+        }
+        .config-panel input {
+            background:#f8fafc; border:1px solid #e2e8f0; color:#1e293b; padding:6px 10px;
+            border-radius:14px; font-family:monospace; font-size:0.65rem; flex:1; outline:none;
+        }
+        .row { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+        .section-title {
+            font-weight:700; font-size:0.8rem; color:#475569; display:flex; align-items:center; gap:6px;
+            padding-left:6px; border-left:3px solid #3b82c4; margin-bottom:2px;
+        }
+        .device-card { background:#fff; border-radius:18px; padding:14px; box-shadow:var(--shadow); border:1px solid #e8ecf1; }
+        .device-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:8px; }
+        .device-item { background:#fff; border-radius:16px; padding:12px 8px; text-align:center; box-shadow:var(--shadow); border:1px solid #e8ecf1; }
+        .device-value { font-size:1.6rem; font-weight:800; color:#1e40af; }
+        .device-label { font-size:0.65rem; color:#64748b; margin-top:2px; }
+        .brightness-bar { height:8px; background:#e2e8f0; border-radius:6px; overflow:hidden; margin-top:6px; }
+        .brightness-fill { height:100%; background:#f59e0b; border-radius:6px; transition:width 0.4s; }
+        .btn-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+        .wakeup-item { display:flex; align-items:center; gap:6px; padding:6px 0; }
+        .wakeup-item input { flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:6px 10px; border-radius:14px; font-size:0.7rem; outline:none; }
+        .log-box { background:#f8fafc; border-radius:14px; padding:8px 10px; height:80px; overflow-y:auto; font-family:monospace; font-size:0.6rem; color:#64748b; border:1px solid #e8ecf1; }
+    </style>
+</head>
+<body>
+<div class="phone">
+    <div class="status-bar">
+        <div class="bt-area">
+            <div class="led" id="bleLed"></div>
+            <span id="connStatus">未连接</span>
+            <button class="btn" id="configToggleBtn"><i class="fas fa-cog"></i></button>
+        </div>
+        <div class="clock" id="liveClock">--:--:--</div>
+    </div>
+
+    <div class="config-panel" id="configPanel">
+        <div class="row">
+            <input id="serviceUuid" value="0000fff0-0000-1000-8000-00805f9b34fb" placeholder="服务UUID">
+            <input id="notifyUuid" value="0000fff1-0000-1000-8000-00805f9b34fb" placeholder="通知UUID">
+            <input id="writeUuid" value="0000fff1-0000-1000-8000-00805f9b34fb" placeholder="写入UUID">
+        </div>
+        <div class="row">
+            <button class="btn" id="scanBtn"><i class="fas fa-search"></i> 扫描</button>
+            <button class="btn" id="connectBtn" disabled>连接</button>
+            <button class="btn btn-danger" id="disconnectBtn" disabled>断开</button>
+        </div>
+    </div>
+
+    <div class="device-card">
+        <div class="section-title"><i class="fas fa-home"></i> 设备状态</div>
+        <div class="device-grid">
+            <div class="device-item">
+                <div class="device-label">💡 灯光亮度</div>
+                <div class="device-value" id="brightnessValue">0%</div>
+                <div class="brightness-bar"><div class="brightness-fill" id="brightnessFill" style="width:0%;"></div></div>
+            </div>
+            <div class="device-item">
+                <div class="device-label">🌀 风扇</div>
+                <div class="device-value" id="fanStatus">关</div>
+            </div>
+            <div class="device-item">
+                <div class="device-label">❄️ 空调</div>
+                <div class="device-value" id="acStatus">关</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title"><i class="fas fa-sliders-h"></i> 设备控制</div>
+    <div class="btn-row">
+        <button class="btn" id="fanToggleBtn"><i class="fas fa-fan"></i> 风扇开关</button>
+        <button class="btn" id="acToggleBtn"><i class="fas fa-snowflake"></i> 空调开关</button>
+        <button class="btn btn-warn" id="lightToggleBtn"><i class="fas fa-lightbulb"></i> 灯光开关</button>
+        <button class="btn btn-accent" id="brightUpBtn"><i class="fas fa-plus"></i> 亮度+25</button>
+        <button class="btn btn-accent" id="brightDownBtn"><i class="fas fa-minus"></i> 亮度-25</button>
+    </div>
+
+    <div class="device-card">
+        <div class="section-title"><i class="fas fa-microphone"></i> 唤醒词设置</div>
+        <div id="wakeupContainer">
+            <!-- 动态生成 -->
+        </div>
+        <div style="font-size:0.6rem; color:#64748b; margin-top:6px;">点击“修改”可编辑唤醒词并自动下发对应字母指令</div>
+    </div>
+
+    <div class="log-box" id="logBox">🏠 语音家居控制面板就绪</div>
+</div>
+
+<script>
+    (function() {
+        // DOM 绑定
+        const bleLed = document.getElementById('bleLed');
+        const connStatus = document.getElementById('connStatus');
+        const configToggleBtn = document.getElementById('configToggleBtn');
+        const configPanel = document.getElementById('configPanel');
+        const scanBtn = document.getElementById('scanBtn');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const serviceUuidInput = document.getElementById('serviceUuid');
+        const notifyUuidInput = document.getElementById('notifyUuid');
+        const writeUuidInput = document.getElementById('writeUuid');
+        const logBox = document.getElementById('logBox');
+        const clockSpan = document.getElementById('liveClock');
+
+        const brightnessValue = document.getElementById('brightnessValue');
+        const brightnessFill = document.getElementById('brightnessFill');
+        const fanStatus = document.getElementById('fanStatus');
+        const acStatus = document.getElementById('acStatus');
+
+        const fanToggleBtn = document.getElementById('fanToggleBtn');
+        const acToggleBtn = document.getElementById('acToggleBtn');
+        const lightToggleBtn = document.getElementById('lightToggleBtn');
+        const brightUpBtn = document.getElementById('brightUpBtn');
+        const brightDownBtn = document.getElementById('brightDownBtn');
+        const wakeupContainer = document.getElementById('wakeupContainer');
+
+        // 蓝牙变量
+        let bluetoothDevice = null, gattServer = null, notifyChar = null, writeChar = null, isConnected = false;
+        let currentBrightness = 0, currentFan = 0, currentAc = 0;
+
+        // 唤醒词配置
+        const defaultWakeupWords = ['小爱同学', '小布', '小艺', '你好'];
+        const wakeupChars = ['A', 'B', 'C', 'D']; // 对应下发的字母
+
+        function loadWakeupWords() {
+            const saved = localStorage.getItem('wakeup_words');
+            if (saved) {
+                try { return JSON.parse(saved); } catch(e) {}
+            }
+            return [...defaultWakeupWords];
+        }
+        function saveWakeupWords(words) {
+            localStorage.setItem('wakeup_words', JSON.stringify(words));
+        }
+
+        let wakeupWords = loadWakeupWords();
+
+        function renderWakeupUI() {
+            wakeupContainer.innerHTML = wakeupWords.map((word, idx) => `
+                <div class="wakeup-item">
+                    <span style="font-size:0.7rem; width:20px;">${wakeupChars[idx]}</span>
+                    <input type="text" class="wakeup-input" data-idx="${idx}" value="${word}" placeholder="唤醒词" readonly>
+                    <button class="btn btn-accent wakeup-edit" data-idx="${idx}">修改</button>
+                </div>
+            `).join('');
+
+            // 修改按钮事件：弹出 prompt 修改唤醒词，保存后下发对应字母
+            document.querySelectorAll('.wakeup-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.idx);
+                    const newWord = prompt('请输入新的唤醒词', wakeupWords[idx]);
+                    if (newWord !== null && newWord.trim() !== '') {
+                        wakeupWords[idx] = newWord.trim();
+                        saveWakeupWords(wakeupWords);
+                        renderWakeupUI();
+                        addLog(`✏️ 唤醒词${idx+1}已更新为“${wakeupWords[idx]}”`, 'system');
+                        // 下发对应的字母指令
+                        sendCommand(wakeupChars[idx], `唤醒词${idx+1}修改`);
+                    }
+                });
+            });
+
+            // 双击编辑功能（可选，保留但不自动下发）
+            document.querySelectorAll('.wakeup-input').forEach(inp => {
+                inp.addEventListener('dblclick', () => {
+                    inp.removeAttribute('readonly');
+                    inp.focus();
+                });
+                inp.addEventListener('blur', () => {
+                    inp.setAttribute('readonly', true);
+                    const idx = parseInt(inp.dataset.idx);
+                    const newWord = inp.value.trim() || defaultWakeupWords[idx];
+                    if (newWord !== wakeupWords[idx]) {
+                        wakeupWords[idx] = newWord;
+                        saveWakeupWords(wakeupWords);
+                        addLog(`✏️ 唤醒词${idx+1}已自动保存`, 'system');
+                    }
+                });
+            });
+        }
+
+        function updateDeviceUI() {
+            brightnessValue.textContent = currentBrightness + '%';
+            brightnessFill.style.width = currentBrightness + '%';
+            fanStatus.textContent = currentFan ? '开' : '关';
+            acStatus.textContent = currentAc ? '开' : '关';
+        }
+
+        // 蓝牙指令发送
+        async function sendCommand(cmd, desc) {
+            if (!isConnected || !writeChar) {
+                addLog('⚠️ 未连接，无法发送指令 ' + cmd, 'tx');
+                return;
+            }
+            try {
+                await writeChar.writeValue(new TextEncoder().encode(cmd));
+                addLog(`📤 下发 ${cmd} (${desc})`, 'tx');
+            } catch(e) {
+                addLog(`发送失败: ${e.message}`, 'tx');
+            }
+        }
+
+        // 数据解析
+        function parseUploadData(raw) {
+            const match = raw.match(/#(\d+)#([01])#([01])#/);
+            if (!match) return;
+            currentBrightness = parseInt(match[1]);
+            currentFan = parseInt(match[2]);
+            currentAc = parseInt(match[3]);
+            updateDeviceUI();
+            addLog(`📥 亮度:${currentBrightness}% 风扇:${currentFan?'开':'关'} 空调:${currentAc?'开':'关'}`, 'rx');
+        }
+
+        function onNotification(event) {
+            const val = event.target.value;
+            if (!val) return;
+            parseUploadData(new TextDecoder('utf-8').decode(val).trim());
+        }
+
+        // 蓝牙扫描与连接（参照成功案例）
+        async function scan() {
+            if (!navigator.bluetooth) { alert('需要Web Bluetooth'); return; }
+            const svc = serviceUuidInput.value.trim(); if(!svc) return alert('输入服务UUID');
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [svc] }], optionalServices: [svc]
+                });
+                bluetoothDevice = device;
+                connectBtn.disabled = false;
+                addLog(`已选择设备: ${device.name || device.id}`, 'system');
+            } catch(e) {
+                if(!e.message.includes('cancelled')) addLog(`扫描错误: ${e.message}`, 'system');
+            }
+        }
+
+        async function connect() {
+            if (!bluetoothDevice) return;
+            const svc = serviceUuidInput.value.trim(), ntf = notifyUuidInput.value.trim(), wrt = writeUuidInput.value.trim();
+            try {
+                gattServer = await bluetoothDevice.gatt.connect();
+                const service = await gattServer.getPrimaryService(svc);
+                notifyChar = await service.getCharacteristic(ntf);
+                await notifyChar.startNotifications();
+                notifyChar.addEventListener('characteristicvaluechanged', onNotification);
+                if (wrt) {
+                    try { writeChar = await service.getCharacteristic(wrt); } catch(e) {}
+                }
+                updateConnectionUI(true);
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnect);
+                addLog('✅ 蓝牙已连接', 'system');
+            } catch(e) {
+                addLog(`连接失败: ${e.message}`, 'system');
+                updateConnectionUI(false);
+            }
+        }
+
+        function onDisconnect() {
+            addLog('设备断开', 'system');
+            if (notifyChar) notifyChar.removeEventListener('characteristicvaluechanged', onNotification);
+            notifyChar = null; writeChar = null;
+            updateConnectionUI(false);
+        }
+
+        function disconnect() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) bluetoothDevice.gatt.disconnect();
+            else onDisconnect();
+        }
+
+        function updateConnectionUI(connected) {
+            isConnected = connected;
+            bleLed.classList.toggle('active', connected);
+            connStatus.textContent = connected ? '已连接' : '未连接';
+            connectBtn.disabled = connected || !bluetoothDevice;
+            disconnectBtn.disabled = !connected;
+            scanBtn.disabled = connected;
+        }
+
+        // 控制按钮事件
+        fanToggleBtn.addEventListener('click', () => sendCommand('A', '风扇开关切换'));
+        acToggleBtn.addEventListener('click', () => sendCommand('B', '空调开关切换'));
+        lightToggleBtn.addEventListener('click', () => sendCommand('C', '灯光开关切换'));
+        brightUpBtn.addEventListener('click', () => sendCommand('D', '亮度+25'));
+        brightDownBtn.addEventListener('click', () => sendCommand('E', '亮度-25'));
+
+        configToggleBtn.addEventListener('click', () => {
+            configPanel.style.display = configPanel.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        scanBtn.addEventListener('click', scan);
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+
+        function addLog(msg, type='system') {
+            const div = document.createElement('div');
+            div.style.color = type==='rx'?'#10b981': type==='tx'?'#3b82c4':'#64748b';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight;
+            if(logBox.children.length > 30) logBox.removeChild(logBox.children[0]);
+        }
+
+        function updateClock() { clockSpan.textContent = new Date().toLocaleTimeString('zh-CN', {hour12:false}); }
+
+        function init() {
+            updateConnectionUI(false);
+            updateDeviceUI();
+            renderWakeupUI();
+            setInterval(updateClock, 1000);
+            updateClock();
+            addLog('🏠 语音家居控制面板已启动');
+        }
+        init();
+    })();
+</script>
+</body>
+</html>
