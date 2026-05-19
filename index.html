@@ -2,388 +2,367 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>⛑️ 矿井安全监测 · 巴法云 & 信标定位</title>
-    <script src="https://registry.npmmirror.com/echarts/5.5.0/files/dist/echarts.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0">
+    <title>语音家居控制面板</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --bg: #1a1e26;
-            --card: #242830;
-            --accent: #f08a4b;
-            --danger: #e74c3c;
-            --safe: #2ecc71;
-            --text: #e0e4ec;
-            --text2: #a0aab4;
-            --border: #3a4048;
-            --radius: 20px;
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --accent: #3b82c4;
+            --accent2: #10b981;
+            --danger: #ef4444;
+            --warn: #f59e0b;
+            --text: #1e293b;
+            --text2: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 16px rgba(0,0,0,0.06);
         }
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: radial-gradient(circle at 50% 20%, #2c3340, #12161e);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(160deg, #e8f0f8 0%, #f0f4f8 30%, #fdfcfb 60%, #eef2f6 100%);
             min-height: 100vh;
-            display: flex; justify-content: center; align-items: center; padding: 16px;
+            display: flex; align-items: center; justify-content: center; padding: 14px;
         }
-        .app {
-            max-width: 800px; width: 100%; background: var(--bg); border-radius: 36px;
-            padding: 16px 14px 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-            border: 1px solid #3a4350; color: var(--text);
-            display: flex; flex-direction: column; gap: 14px;
+        .phone {
+            max-width: 430px; width: 100%; background: #fafbfc; border-radius: 40px;
+            padding: 16px 14px 22px; box-shadow: 0 18px 45px rgba(0,0,0,0.12);
+            border: 1px solid #dce3ea; color: var(--text);
+            display: flex; flex-direction: column; gap: 12px; max-height: 95vh; overflow-y: auto;
         }
-        .nav {
-            display: flex; gap: 8px; background: #1e2430; border-radius: 24px;
-            padding: 4px; border: 1px solid #2e3844;
+        .status-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; border-radius: 28px; padding: 8px 16px; font-size:0.8rem; font-weight:600;
+            box-shadow: var(--shadow); border:1px solid #e8ecf1;
         }
-        .nav-tab {
-            flex: 1; text-align: center; padding: 10px 8px; border-radius: 20px;
-            font-weight: 700; font-size: 14px; cursor: pointer; color: #9aa4b8; transition: 0.2s;
-        }
-        .nav-tab.active { background: var(--accent); color: #12161e; box-shadow: 0 4px 12px rgba(240,138,75,0.3); }
-        .view { display: none; flex-direction: column; gap: 14px; }
-        .view.active { display: flex; }
-        .sensor-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; }
-        .sensor-card {
-            background: var(--card); border-radius: var(--radius); padding: 12px 10px;
-            text-align: center; border: 1px solid var(--border);
-        }
-        .sensor-value { font-size: 28px; font-weight: 800; color: #fff; }
-        .sensor-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-        .sensor-unit { font-size: 12px; color: #7c8a9a; }
-        .alarm-control {
-            display: flex; align-items: center; justify-content: space-between;
-            background: #2a303c; border-radius: 16px; padding: 8px 16px;
-        }
+        .bt-area { display:flex; align-items:center; gap:7px; }
+        .led { width:10px; height:10px; border-radius:50%; background:#cbd5e0; transition:0.3s; }
+        .led.active { background:#10b981; box-shadow:0 0 10px #10b981; animation:pulse 1.4s infinite; }
+        @keyframes pulse { 0%,100%{opacity:0.6;transform:scale(1);} 50%{opacity:1;transform:scale(1.15);} }
+        .clock { font-family:monospace; font-weight:700; font-size:0.9rem; color:#334155; }
         .btn {
-            padding: 8px 18px; border-radius: 20px; font-weight: 600; font-size: 13px;
-            cursor: pointer; border: none; background: #3d4854; color: #fff;
-            transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;
+            background:#f1f5f9; border:none; padding:7px 14px; border-radius:18px; font-weight:600; font-size:0.68rem;
+            color:#334155; cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+            border:1px solid #dde4ed; transition:0.15s; white-space:nowrap;
         }
-        .btn-primary { background: var(--accent); color: #12161e; }
-        .btn-danger { background: var(--danger); }
-        .btn:active { transform: scale(0.96); }
-        .chart-box {
-            background: var(--card); border-radius: var(--radius); padding: 12px;
-            border: 1px solid var(--border);
+        .btn:active { transform:scale(0.95); background:#e2e8f0; }
+        .btn:disabled { opacity:0.5; pointer-events:none; }
+        .btn-accent { background:#3b82c4; color:#fff; border-color:#3b82c4; }
+        .btn-danger { background:#ef4444; color:#fff; border-color:#ef4444; }
+        .btn-warn { background:#f59e0b; color:#fff; border-color:#f59e0b; }
+        .btn-success { background:#10b981; color:#fff; border-color:#10b981; }
+        .config-panel {
+            display:none; background:#fff; border-radius:18px; padding:10px; flex-direction:column; gap:7px;
+            border:1px solid #e2e8f0; box-shadow:var(--shadow);
         }
-        .chart-inner { width: 100%; height: 220px; }
-        .ble-panel {
-            background: var(--card); border-radius: var(--radius); padding: 14px;
-            border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+        .config-panel input {
+            background:#f8fafc; border:1px solid #e2e8f0; color:#1e293b; padding:6px 10px;
+            border-radius:14px; font-family:monospace; font-size:0.65rem; flex:1; outline:none;
         }
-        .ble-panel input {
-            padding: 8px 12px; border-radius: 14px; border: 1px solid #3a444e;
-            background: #131820; color: #fff; font-family: monospace; font-size: 12px; flex:1; min-width:160px;
+        .row { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+        .section-title {
+            font-weight:700; font-size:0.8rem; color:#475569; display:flex; align-items:center; gap:6px;
+            padding-left:6px; border-left:3px solid #3b82c4; margin-bottom:2px;
         }
-        .coordinate-view {
-            display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center;
-        }
-        canvas {
-            background: #1e2630; border-radius: 16px; border: 1px solid #3a4652;
-        }
-        .position-info {
-            background: #242830; border-radius: 16px; padding: 12px;
-            font-family: monospace; font-size: 13px; color: #c0d0e0; border: 1px solid #3a4048;
-        }
-        .algo-steps {
-            background: #1c222c; border-radius: 16px; padding: 14px;
-            font-family: monospace; font-size: 12px; color: #b0c0d0; border: 1px solid #2e3844;
-            line-height: 1.6; max-height: 200px; overflow-y: auto;
-        }
-        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 11px; }
-        .badge-on { background: #2c6b4e; color: #a0ffc0; }
-        .badge-off { background: #5a3a3a; color: #ffa0a0; }
-        .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; padding: 10px 24px; border-radius: 30px;
-            font-size: 13px; z-index: 999; animation: fadeToast 2.5s forwards; pointer-events: none;
-        }
-        @keyframes fadeToast {
-            0%{opacity:0;transform:translateX(-50%) translateY(10px);}
-            15%{opacity:1;transform:translateX(-50%) translateY(0);}
-            80%{opacity:1;} 100%{opacity:0;}
-        }
+        .device-card { background:#fff; border-radius:18px; padding:14px; box-shadow:var(--shadow); border:1px solid #e8ecf1; }
+        .device-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:8px; }
+        .device-item { background:#fff; border-radius:16px; padding:12px 8px; text-align:center; box-shadow:var(--shadow); border:1px solid #e8ecf1; }
+        .device-value { font-size:1.6rem; font-weight:800; color:#1e40af; }
+        .device-label { font-size:0.65rem; color:#64748b; margin-top:2px; }
+        .brightness-bar { height:8px; background:#e2e8f0; border-radius:6px; overflow:hidden; margin-top:6px; }
+        .brightness-fill { height:100%; background:#f59e0b; border-radius:6px; transition:width 0.4s; }
+        .btn-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+        .wakeup-item { display:flex; align-items:center; gap:6px; padding:6px 0; }
+        .wakeup-item input { flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:6px 10px; border-radius:14px; font-size:0.7rem; outline:none; }
+        .log-box { background:#f8fafc; border-radius:14px; padding:8px 10px; height:80px; overflow-y:auto; font-family:monospace; font-size:0.6rem; color:#64748b; border:1px solid #e8ecf1; }
     </style>
 </head>
 <body>
-<div class="app">
-    <div class="nav">
-        <div class="nav-tab active" data-view="monitor">⛑️ 矿井监测</div>
-        <div class="nav-tab" data-view="beacon">📡 信标定位</div>
+<div class="phone">
+    <div class="status-bar">
+        <div class="bt-area">
+            <div class="led" id="bleLed"></div>
+            <span id="connStatus">未连接</span>
+            <button class="btn" id="configToggleBtn"><i class="fas fa-cog"></i></button>
+        </div>
+        <div class="clock" id="liveClock">--:--:--</div>
     </div>
 
-    <!-- 矿井监测视图 -->
-    <div class="view active" id="view-monitor">
-        <div class="sensor-row">
-            <div class="sensor-card"><div class="sensor-label">💥 瓦斯</div><div class="sensor-value" id="gasVal">--</div><div class="sensor-unit">%</div></div>
-            <div class="sensor-card"><div class="sensor-label">🫁 CO</div><div class="sensor-value" id="coVal">--</div><div class="sensor-unit">ppm</div></div>
-            <div class="sensor-card"><div class="sensor-label">❤️ 心率</div><div class="sensor-value" id="hrVal">--</div><div class="sensor-unit">bpm</div></div>
-            <div class="sensor-card"><div class="sensor-label">🌡️ 温度</div><div class="sensor-value" id="tempVal">--</div><div class="sensor-unit">°C</div></div>
-            <div class="sensor-card"><div class="sensor-label">💧 湿度</div><div class="sensor-value" id="humiVal">--</div><div class="sensor-unit">%</div></div>
+    <div class="config-panel" id="configPanel">
+        <div class="row">
+            <input id="serviceUuid" value="0000fff0-0000-1000-8000-00805f9b34fb" placeholder="服务UUID">
+            <input id="notifyUuid" value="0000fff1-0000-1000-8000-00805f9b34fb" placeholder="通知UUID">
+            <input id="writeUuid" value="0000fff1-0000-1000-8000-00805f9b34fb" placeholder="写入UUID">
         </div>
-        <div class="alarm-control">
-            <span>🚨 远程报警状态：<span class="badge badge-off" id="alarmStatusBadge">关闭</span></span>
-            <button class="btn btn-danger" onclick="toggleAlarm()">切换报警 (A)</button>
+        <div class="row">
+            <button class="btn" id="scanBtn"><i class="fas fa-search"></i> 扫描</button>
+            <button class="btn" id="connectBtn" disabled>连接</button>
+            <button class="btn btn-danger" id="disconnectBtn" disabled>断开</button>
         </div>
-        <div class="chart-box">
-            <h3 style="margin-bottom:8px;">📈 环境参数趋势</h3>
-            <div class="chart-inner" id="chartMulti"></div>
-        </div>
-        <div class="chart-box">
-            <h3 style="margin-bottom:8px;">❤️ 心率趋势</h3>
-            <div class="chart-inner" id="chartHR"></div>
-        </div>
-        <button class="btn" onclick="exportData()">📥 导出CSV</button>
     </div>
 
-    <!-- 信标定位视图 -->
-    <div class="view" id="view-beacon">
-        <div class="ble-panel">
-            <input id="svcUuid" value="0000fff0-0000-1000-8000-00805f9b34fb" placeholder="服务UUID">
-            <button class="btn" id="scanBtn">🔍 扫描设备</button>
-            <button class="btn btn-primary" id="startLocBtn" disabled>📍 开始监听</button>
-            <span id="rssiDisplay" style="font-size:14px;">RSSI: --</span>
-        </div>
-        <div class="coordinate-view">
-            <canvas id="locCanvas" width="360" height="360"></canvas>
-            <div class="position-info">
-                <div>📶 RSSI：<span id="rssiValue">--</span> dBm</div>
-                <div>📏 估算距离：<span id="estDist">--</span> m</div>
-                <div>📍 相对原点距离：<span id="posDist">--</span> 像素</div>
+    <div class="device-card">
+        <div class="section-title"><i class="fas fa-home"></i> 设备状态</div>
+        <div class="device-grid">
+            <div class="device-item">
+                <div class="device-label">💡 灯光亮度</div>
+                <div class="device-value" id="brightnessValue">0%</div>
+                <div class="brightness-bar"><div class="brightness-fill" id="brightnessFill" style="width:0%;"></div></div>
+            </div>
+            <div class="device-item">
+                <div class="device-label">🌀 风扇</div>
+                <div class="device-value" id="fanStatus">关</div>
+            </div>
+            <div class="device-item">
+                <div class="device-label">❄️ 空调</div>
+                <div class="device-value" id="acStatus">关</div>
             </div>
         </div>
-        <div class="algo-steps" id="algoSteps">
-            等待蓝牙数据...
-        </div>
     </div>
+
+    <div class="section-title"><i class="fas fa-sliders-h"></i> 设备控制</div>
+    <div class="btn-row">
+        <button class="btn" id="fanToggleBtn"><i class="fas fa-fan"></i> 风扇开关</button>
+        <button class="btn" id="acToggleBtn"><i class="fas fa-snowflake"></i> 空调开关</button>
+        <button class="btn btn-warn" id="lightToggleBtn"><i class="fas fa-lightbulb"></i> 灯光开关</button>
+        <button class="btn btn-accent" id="brightUpBtn"><i class="fas fa-plus"></i> 亮度+25</button>
+        <button class="btn btn-accent" id="brightDownBtn"><i class="fas fa-minus"></i> 亮度-25</button>
+    </div>
+
+    <div class="device-card">
+        <div class="section-title"><i class="fas fa-microphone"></i> 唤醒词设置</div>
+        <div id="wakeupContainer">
+            <!-- 动态生成 -->
+        </div>
+        <div style="font-size:0.6rem; color:#64748b; margin-top:6px;">点击“修改”可编辑唤醒词并自动下发对应字母指令</div>
+    </div>
+
+    <div class="log-box" id="logBox">🏠 语音家居控制面板就绪</div>
 </div>
-<div id="toastBox"></div>
 
 <script>
     (function() {
-        const UID = '28449f804baf4a4a87efedc38a9e60ac';
-        const DATA_TOPIC = 'kgshuju';
-        const CTRL_TOPIC = 'kgctrl';
-        const SVC_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';
-
-        let pollingTimer, history=[], alarmOn=false;
-        let bluetoothDevice=null, advListenerActive=false, currentRSSI=-60;
-        const TX_POWER = -59;      // 1米处参考RSSI
-        const N_FACTOR = 1.8;      // 衰减因子（调小使距离变化更剧烈）
-        const SCALE = 30;          // 像素/米（放大移动幅度）
-
-        const navTabs = document.querySelectorAll('.nav-tab');
-        const views = document.querySelectorAll('.view');
+        // DOM 绑定
+        const bleLed = document.getElementById('bleLed');
+        const connStatus = document.getElementById('connStatus');
+        const configToggleBtn = document.getElementById('configToggleBtn');
+        const configPanel = document.getElementById('configPanel');
         const scanBtn = document.getElementById('scanBtn');
-        const startLocBtn = document.getElementById('startLocBtn');
-        const rssiDisplay = document.getElementById('rssiDisplay');
-        const rssiValue = document.getElementById('rssiValue');
-        const estDist = document.getElementById('estDist');
-        const posDist = document.getElementById('posDist');
-        const algoSteps = document.getElementById('algoSteps');
-        const locCanvas = document.getElementById('locCanvas');
-        const ctx = locCanvas.getContext('2d');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const serviceUuidInput = document.getElementById('serviceUuid');
+        const notifyUuidInput = document.getElementById('notifyUuid');
+        const writeUuidInput = document.getElementById('writeUuid');
+        const logBox = document.getElementById('logBox');
+        const clockSpan = document.getElementById('liveClock');
 
-        // 三个固定信标坐标（画布像素）
-        const beacons = [
-            { x:60,  y:60,  name:'A' },
-            { x:300, y:60,  name:'B' },
-            { x:180, y:300, name:'C' }
-        ];
+        const brightnessValue = document.getElementById('brightnessValue');
+        const brightnessFill = document.getElementById('brightnessFill');
+        const fanStatus = document.getElementById('fanStatus');
+        const acStatus = document.getElementById('acStatus');
 
-        navTabs.forEach(tab => {
-            tab.addEventListener('click', ()=>{
-                navTabs.forEach(t=>t.classList.remove('active'));
-                tab.classList.add('active');
-                views.forEach(v=>v.classList.remove('active'));
-                document.getElementById('view-'+tab.dataset.view).classList.add('active');
+        const fanToggleBtn = document.getElementById('fanToggleBtn');
+        const acToggleBtn = document.getElementById('acToggleBtn');
+        const lightToggleBtn = document.getElementById('lightToggleBtn');
+        const brightUpBtn = document.getElementById('brightUpBtn');
+        const brightDownBtn = document.getElementById('brightDownBtn');
+        const wakeupContainer = document.getElementById('wakeupContainer');
+
+        // 蓝牙变量
+        let bluetoothDevice = null, gattServer = null, notifyChar = null, writeChar = null, isConnected = false;
+        let currentBrightness = 0, currentFan = 0, currentAc = 0;
+
+        // 唤醒词配置
+        const defaultWakeupWords = ['小爱同学', '小布', '小艺', '你好'];
+        const wakeupChars = ['A', 'B', 'C', 'D']; // 对应下发的字母
+
+        function loadWakeupWords() {
+            const saved = localStorage.getItem('wakeup_words');
+            if (saved) {
+                try { return JSON.parse(saved); } catch(e) {}
+            }
+            return [...defaultWakeupWords];
+        }
+        function saveWakeupWords(words) {
+            localStorage.setItem('wakeup_words', JSON.stringify(words));
+        }
+
+        let wakeupWords = loadWakeupWords();
+
+        function renderWakeupUI() {
+            wakeupContainer.innerHTML = wakeupWords.map((word, idx) => `
+                <div class="wakeup-item">
+                    <span style="font-size:0.7rem; width:20px;">${wakeupChars[idx]}</span>
+                    <input type="text" class="wakeup-input" data-idx="${idx}" value="${word}" placeholder="唤醒词" readonly>
+                    <button class="btn btn-accent wakeup-edit" data-idx="${idx}">修改</button>
+                </div>
+            `).join('');
+
+            // 修改按钮事件：弹出 prompt 修改唤醒词，保存后下发对应字母
+            document.querySelectorAll('.wakeup-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.idx);
+                    const newWord = prompt('请输入新的唤醒词', wakeupWords[idx]);
+                    if (newWord !== null && newWord.trim() !== '') {
+                        wakeupWords[idx] = newWord.trim();
+                        saveWakeupWords(wakeupWords);
+                        renderWakeupUI();
+                        addLog(`✏️ 唤醒词${idx+1}已更新为“${wakeupWords[idx]}”`, 'system');
+                        // 下发对应的字母指令
+                        sendCommand(wakeupChars[idx], `唤醒词${idx+1}修改`);
+                    }
+                });
             });
+
+            // 双击编辑功能（可选，保留但不自动下发）
+            document.querySelectorAll('.wakeup-input').forEach(inp => {
+                inp.addEventListener('dblclick', () => {
+                    inp.removeAttribute('readonly');
+                    inp.focus();
+                });
+                inp.addEventListener('blur', () => {
+                    inp.setAttribute('readonly', true);
+                    const idx = parseInt(inp.dataset.idx);
+                    const newWord = inp.value.trim() || defaultWakeupWords[idx];
+                    if (newWord !== wakeupWords[idx]) {
+                        wakeupWords[idx] = newWord;
+                        saveWakeupWords(wakeupWords);
+                        addLog(`✏️ 唤醒词${idx+1}已自动保存`, 'system');
+                    }
+                });
+            });
+        }
+
+        function updateDeviceUI() {
+            brightnessValue.textContent = currentBrightness + '%';
+            brightnessFill.style.width = currentBrightness + '%';
+            fanStatus.textContent = currentFan ? '开' : '关';
+            acStatus.textContent = currentAc ? '开' : '关';
+        }
+
+        // 蓝牙指令发送
+        async function sendCommand(cmd, desc) {
+            if (!isConnected || !writeChar) {
+                addLog('⚠️ 未连接，无法发送指令 ' + cmd, 'tx');
+                return;
+            }
+            try {
+                await writeChar.writeValue(new TextEncoder().encode(cmd));
+                addLog(`📤 下发 ${cmd} (${desc})`, 'tx');
+            } catch(e) {
+                addLog(`发送失败: ${e.message}`, 'tx');
+            }
+        }
+
+        // 数据解析
+        function parseUploadData(raw) {
+            const match = raw.match(/#(\d+)#([01])#([01])#/);
+            if (!match) return;
+            currentBrightness = parseInt(match[1]);
+            currentFan = parseInt(match[2]);
+            currentAc = parseInt(match[3]);
+            updateDeviceUI();
+            addLog(`📥 亮度:${currentBrightness}% 风扇:${currentFan?'开':'关'} 空调:${currentAc?'开':'关'}`, 'rx');
+        }
+
+        function onNotification(event) {
+            const val = event.target.value;
+            if (!val) return;
+            parseUploadData(new TextDecoder('utf-8').decode(val).trim());
+        }
+
+        // 蓝牙扫描与连接（参照成功案例）
+        async function scan() {
+            if (!navigator.bluetooth) { alert('需要Web Bluetooth'); return; }
+            const svc = serviceUuidInput.value.trim(); if(!svc) return alert('输入服务UUID');
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [svc] }], optionalServices: [svc]
+                });
+                bluetoothDevice = device;
+                connectBtn.disabled = false;
+                addLog(`已选择设备: ${device.name || device.id}`, 'system');
+            } catch(e) {
+                if(!e.message.includes('cancelled')) addLog(`扫描错误: ${e.message}`, 'system');
+            }
+        }
+
+        async function connect() {
+            if (!bluetoothDevice) return;
+            const svc = serviceUuidInput.value.trim(), ntf = notifyUuidInput.value.trim(), wrt = writeUuidInput.value.trim();
+            try {
+                gattServer = await bluetoothDevice.gatt.connect();
+                const service = await gattServer.getPrimaryService(svc);
+                notifyChar = await service.getCharacteristic(ntf);
+                await notifyChar.startNotifications();
+                notifyChar.addEventListener('characteristicvaluechanged', onNotification);
+                if (wrt) {
+                    try { writeChar = await service.getCharacteristic(wrt); } catch(e) {}
+                }
+                updateConnectionUI(true);
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnect);
+                addLog('✅ 蓝牙已连接', 'system');
+            } catch(e) {
+                addLog(`连接失败: ${e.message}`, 'system');
+                updateConnectionUI(false);
+            }
+        }
+
+        function onDisconnect() {
+            addLog('设备断开', 'system');
+            if (notifyChar) notifyChar.removeEventListener('characteristicvaluechanged', onNotification);
+            notifyChar = null; writeChar = null;
+            updateConnectionUI(false);
+        }
+
+        function disconnect() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) bluetoothDevice.gatt.disconnect();
+            else onDisconnect();
+        }
+
+        function updateConnectionUI(connected) {
+            isConnected = connected;
+            bleLed.classList.toggle('active', connected);
+            connStatus.textContent = connected ? '已连接' : '未连接';
+            connectBtn.disabled = connected || !bluetoothDevice;
+            disconnectBtn.disabled = !connected;
+            scanBtn.disabled = connected;
+        }
+
+        // 控制按钮事件
+        fanToggleBtn.addEventListener('click', () => sendCommand('A', '风扇开关切换'));
+        acToggleBtn.addEventListener('click', () => sendCommand('B', '空调开关切换'));
+        lightToggleBtn.addEventListener('click', () => sendCommand('C', '灯光开关切换'));
+        brightUpBtn.addEventListener('click', () => sendCommand('D', '亮度+25'));
+        brightDownBtn.addEventListener('click', () => sendCommand('E', '亮度-25'));
+
+        configToggleBtn.addEventListener('click', () => {
+            configPanel.style.display = configPanel.style.display === 'flex' ? 'none' : 'flex';
         });
 
-        function showToast(msg) {
-            const el = document.createElement('div'); el.className='toast'; el.textContent=msg;
-            document.getElementById('toastBox').appendChild(el);
-            setTimeout(()=>el.remove(), 2500);
+        scanBtn.addEventListener('click', scan);
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+
+        function addLog(msg, type='system') {
+            const div = document.createElement('div');
+            div.style.color = type==='rx'?'#10b981': type==='tx'?'#3b82c4':'#64748b';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight;
+            if(logBox.children.length > 30) logBox.removeChild(logBox.children[0]);
         }
 
-        // ================= 巴法云 =================
-        async function fetchData() {
-            try {
-                const url = `https://apis.bemfa.com/va/getmsg?uid=${UID}&topic=${DATA_TOPIC}&type=3&num=1`;
-                const resp = await fetch(url, {cache:'no-store'});
-                const json = await resp.json();
-                if(json.code===0 && json.data?.length>0 && json.data[0].msg){
-                    const raw = json.data[0].msg;
-                    const parts = raw.replace(/^#/,'').split('#');
-                    if(parts.length>=5){
-                        const gas=parseFloat(parts[0]), co=parseFloat(parts[1]), hr=parseFloat(parts[2]);
-                        const temp=parseFloat(parts[3]), humi=parseFloat(parts[4]);
-                        if(!isNaN(gas)&&!isNaN(co)&&!isNaN(hr)&&!isNaN(temp)&&!isNaN(humi)){
-                            document.getElementById('gasVal').textContent=gas.toFixed(2);
-                            document.getElementById('coVal').textContent=co.toFixed(1);
-                            document.getElementById('hrVal').textContent=hr.toFixed(0);
-                            document.getElementById('tempVal').textContent=temp.toFixed(1);
-                            document.getElementById('humiVal').textContent=humi.toFixed(1);
-                            history.push({time:new Date().toLocaleTimeString('zh-CN',{hour12:false}),gas,co,hr,temp,humi});
-                            if(history.length>50) history.shift();
-                            updateCharts();
-                        }
-                    }
-                }
-            } catch(e){ console.error(e); }
-        }
-
-        let multiChart, hrChart;
-        function initCharts() {
-            multiChart = echarts.init(document.getElementById('chartMulti'));
-            hrChart = echarts.init(document.getElementById('chartHR'));
-            window.addEventListener('resize', ()=>{ multiChart?.resize(); hrChart?.resize(); });
-        }
-        function updateCharts() {
-            if(!multiChart||!hrChart) return;
-            const times = history.map(d=>d.time);
-            multiChart.setOption({
-                tooltip:{trigger:'axis'}, legend:{data:['瓦斯%','CO ppm','温度°C','湿度%'],bottom:0},
-                grid:{left:50,right:20,top:20,bottom:35},
-                xAxis:{data:times, axisLabel:{rotate:30,fontSize:10}},
-                yAxis:{type:'value'},
-                series:[
-                    {name:'瓦斯%',type:'line',data:history.map(d=>d.gas),smooth:true,lineStyle:{color:'#f08a4b'}},
-                    {name:'CO ppm',type:'line',data:history.map(d=>d.co),smooth:true,lineStyle:{color:'#e74c3c'}},
-                    {name:'温度°C',type:'line',data:history.map(d=>d.temp),smooth:true,lineStyle:{color:'#f59e0b'}},
-                    {name:'湿度%',type:'line',data:history.map(d=>d.humi),smooth:true,lineStyle:{color:'#4ea8de'}}
-                ]
-            });
-            hrChart.setOption({
-                tooltip:{}, grid:{left:50,right:20,top:20,bottom:30},
-                xAxis:{data:times, axisLabel:{rotate:30}},
-                yAxis:{name:'bpm'},
-                series:[{type:'line',data:history.map(d=>d.hr),smooth:true,lineStyle:{color:'#2ecc71'},areaStyle:{color:'rgba(46,204,113,0.1)'}}]
-            });
-        }
-
-        window.exportData = function() {
-            if(!history.length) return showToast('无数据');
-            let csv='\uFEFF时间,瓦斯%,CO ppm,心率bpm,温度°C,湿度%\n';
-            history.forEach(d=>csv+=`${d.time},${d.gas},${d.co},${d.hr},${d.temp},${d.humi}\n`);
-            const blob=new Blob([csv],{type:'text/csv'});
-            const a=document.createElement('a');
-            a.href=URL.createObjectURL(blob); a.download=`矿井监测_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click(); showToast('CSV已导出');
-        };
-
-        window.toggleAlarm = async function() {
-            alarmOn=!alarmOn;
-            document.getElementById('alarmStatusBadge').textContent=alarmOn?'开启':'关闭';
-            document.getElementById('alarmStatusBadge').className=alarmOn?'badge badge-on':'badge badge-off';
-            try {
-                const params = new URLSearchParams();
-                params.append('uid',UID); params.append('topic',CTRL_TOPIC);
-                params.append('type','3'); params.append('msg','A');
-                await fetch('https://apis.bemfa.com/va/postmsg',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params});
-                showToast(alarmOn?'🚨 报警已开启':'🔕 报警已关闭');
-            } catch(e){ console.error(e); }
-        };
-
-        // ================= 蓝牙定位 =================
-        async function scanDevice() {
-            if (!navigator.bluetooth) { alert('需要Web Bluetooth'); return; }
-            try {
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters:[{services:[SVC_UUID]}], optionalServices:[SVC_UUID]
-                });
-                startLocBtn.disabled = false;
-                showToast('设备已选择，点击开始监听');
-            } catch(e) { if(!e.message.includes('cancelled')) showToast('扫描失败'); }
-        }
-
-        async function startListening() {
-            if(!bluetoothDevice) return showToast('请先扫描设备');
-            try {
-                if(!advListenerActive) {
-                    await bluetoothDevice.watchAdvertisements();
-                    bluetoothDevice.addEventListener('advertisementreceived', handleAdvert);
-                    advListenerActive = true;
-                }
-                showToast('正在监听广告信号...');
-            } catch(e) { showToast('启动监听失败'); }
-        }
-
-        function handleAdvert(event) {
-            currentRSSI = event.rssi;
-            rssiDisplay.textContent = 'RSSI: ' + currentRSSI + ' dBm';
-            updatePosition();
-        }
-
-        function updatePosition() {
-            // 距离计算
-            const distance = Math.pow(10, (TX_POWER - currentRSSI) / (10 * N_FACTOR));
-            const pixelDist = distance * SCALE;
-            // 固定角度：让目标点沿45度方向移动，信号弱则远
-            const angle = Math.PI/4;
-            const targetX = 180 + pixelDist * Math.cos(angle);
-            const targetY = 180 + pixelDist * Math.sin(angle);
-
-            document.getElementById('rssiValue').textContent = currentRSSI;
-            document.getElementById('estDist').textContent = distance.toFixed(2);
-            document.getElementById('posDist').textContent = pixelDist.toFixed(0);
-
-            drawCanvas(targetX, targetY, distance);
-            updateSteps(distance, pixelDist);
-        }
-
-        function drawCanvas(tx, ty, dist) {
-            ctx.clearRect(0,0,360,360);
-            // 绘制原点
-            ctx.fillStyle = '#f08a4b';
-            ctx.beginPath(); ctx.arc(180,180,8,0,2*Math.PI); ctx.fill();
-            ctx.fillStyle='#fff'; ctx.font='bold 12px sans-serif'; ctx.fillText('原点',190,175);
-            // 绘制三个固定信标
-            beacons.forEach(b => {
-                ctx.fillStyle='#4ea8de';
-                ctx.beginPath(); ctx.arc(b.x,b.y,6,0,2*Math.PI); ctx.fill();
-                ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.fillText(b.name, b.x+10, b.y-8);
-            });
-            // 绘制目标点
-            ctx.fillStyle='#2ecc71';
-            ctx.beginPath(); ctx.arc(tx, ty, 8,0,2*Math.PI); ctx.fill();
-            ctx.fillStyle='#fff'; ctx.fillText('目标', tx+12, ty-10);
-            // 距离连线
-            ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2;
-            ctx.beginPath(); ctx.moveTo(180,180); ctx.lineTo(tx,ty); ctx.stroke();
-            // 距离圆
-            ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1;
-            ctx.beginPath(); ctx.arc(180,180,dist*SCALE,0,2*Math.PI); ctx.stroke();
-        }
-
-        function updateSteps(distance, pixelDist) {
-            document.getElementById('algoSteps').innerHTML = `
-                <strong>📡 当前RSSI:</strong> ${currentRSSI} dBm<br>
-                <strong>📐 距离模型:</strong> d = 10^((TxPower - RSSI)/(10·n))<br>
-                &nbsp;&nbsp; TxPower = ${TX_POWER} dBm, n = ${N_FACTOR}<br>
-                <strong>📏 估算距离:</strong> ${distance.toFixed(2)} m<br>
-                <strong>📍 画布映射:</strong> 每米 ${SCALE} 像素 → ${pixelDist.toFixed(0)} px<br>
-                <strong>💡 效果:</strong> 信号越弱，距离越远，目标点离原点越远。
-            `;
-        }
-
-        // 初始画布绘制
-        function initCanvas() {
-            drawCanvas(180,180,0);
-            document.getElementById('algoSteps').innerHTML = '等待蓝牙数据...';
-        }
-
-        // 事件
-        scanBtn.addEventListener('click', scanDevice);
-        startLocBtn.addEventListener('click', startListening);
-
-        // 启动轮询
-        function startMonitoring() { fetchData(); pollingTimer = setInterval(fetchData, 2000); }
+        function updateClock() { clockSpan.textContent = new Date().toLocaleTimeString('zh-CN', {hour12:false}); }
 
         function init() {
-            initCharts();
-            startMonitoring();
-            document.getElementById('alarmStatusBadge').textContent='关闭';
-            initCanvas();
+            updateConnectionUI(false);
+            updateDeviceUI();
+            renderWakeupUI();
+            setInterval(updateClock, 1000);
+            updateClock();
+            addLog('🏠 语音家居控制面板已启动');
         }
         init();
     })();
