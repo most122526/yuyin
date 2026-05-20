@@ -136,7 +136,7 @@
         <div id="wakeupContainer">
             <!-- 动态生成 -->
         </div>
-        <div style="font-size:0.6rem; color:#64748b; margin-top:6px;">点击“修改”可编辑唤醒词并自动下发对应字母指令</div>
+        <div style="font-size:0.6rem; color:#64748b; margin-top:6px;">点击“修改”可编辑唤醒词并自动下发对应数字指令</div>
     </div>
 
     <div class="log-box" id="logBox">🏠 语音家居控制面板就绪</div>
@@ -176,7 +176,7 @@
 
         // 唤醒词配置
         const defaultWakeupWords = ['小爱同学', '小布', '小艺', '你好'];
-        const wakeupChars = ['A', 'B', 'C', 'D']; // 对应下发的字母
+        const wakeupChars = ['1', '2', '3', '4']; // 修改为数字字符 1/2/3/4
 
         function loadWakeupWords() {
             const saved = localStorage.getItem('wakeup_words');
@@ -200,7 +200,7 @@
                 </div>
             `).join('');
 
-            // 修改按钮事件：弹出 prompt 修改唤醒词，保存后下发对应字母
+            // 修改按钮事件：弹出 prompt 修改唤醒词，保存后下发对应数字
             document.querySelectorAll('.wakeup-edit').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const idx = parseInt(e.target.dataset.idx);
@@ -210,13 +210,13 @@
                         saveWakeupWords(wakeupWords);
                         renderWakeupUI();
                         addLog(`✏️ 唤醒词${idx+1}已更新为“${wakeupWords[idx]}”`, 'system');
-                        // 下发对应的字母指令
+                        // 下发对应的数字指令
                         sendCommand(wakeupChars[idx], `唤醒词${idx+1}修改`);
                     }
                 });
             });
 
-            // 双击编辑功能（可选，保留但不自动下发）
+            // 双击编辑功能（不自动下发）
             document.querySelectorAll('.wakeup-input').forEach(inp => {
                 inp.addEventListener('dblclick', () => {
                     inp.removeAttribute('readonly');
@@ -273,7 +273,7 @@
             parseUploadData(new TextDecoder('utf-8').decode(val).trim());
         }
 
-        // 蓝牙扫描与连接（参照成功案例）
+        // 蓝牙扫描与连接
         async function scan() {
             if (!navigator.bluetooth) { alert('需要Web Bluetooth'); return; }
             const svc = serviceUuidInput.value.trim(); if(!svc) return alert('输入服务UUID');
@@ -331,7 +331,7 @@
             scanBtn.disabled = connected;
         }
 
-        // 控制按钮事件
+        // 控制按钮事件（保持 A/B/C/D/E）
         fanToggleBtn.addEventListener('click', () => sendCommand('A', '风扇开关切换'));
         acToggleBtn.addEventListener('click', () => sendCommand('B', '空调开关切换'));
         lightToggleBtn.addEventListener('click', () => sendCommand('C', '灯光开关切换'));
